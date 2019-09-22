@@ -1,0 +1,28 @@
+{
+  "version": 2,
+  "name": "candy-garden",
+  "alias": "candy.garden",
+  "regions": ["bru"],
+  "scope": "the-lightning-land",
+  "env": {
+  },
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@now/static-build",
+      "config": { "distDir": "build" }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "headers": { "cache-control": "s-maxage=0" },
+      "dest": "/$1"
+    },
+    {
+      "src": "/.*",
+      "headers": { "cache-control": "s-maxage=0" },
+      "dest": "/index.html"
+    }
+  ]
+}
