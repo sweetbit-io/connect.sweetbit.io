@@ -1,5 +1,6 @@
-import React, { useCallback } from 'react';
-import { Route, Switch, Redirect } from "react-router-dom";
+import React, { useCallback, useEffect } from 'react';
+import { Route, Redirect } from 'react-router-dom';
+import { CSSTransition } from 'react-transition-group';
 import { withRouter } from "react-router";
 import Button from './components/button';
 import Spinner from './components/spinner';
@@ -23,16 +24,34 @@ function App({ history }) {
   } = useBluetooth();
 
   const handleStart = useCallback(() => {
-    if (supported) {
+    if (!supported) {
       history.push('/pair');
     } else {
       history.push('/select');
     }
   }, [supported, history]);
 
+  const handleSearchWifi = useCallback(() => {
+    history.push('/wifis');
+    scanWifi();
+  }, [scanWifi, history]);
+
+  const handleWebChoice = useCallback(() => {
+    history.push('/pair');
+  }, [history]);
+
   const handleSelectWifi = useCallback(() => {
-    connectWifi('onion', 'noo');
-  }, [connectWifi]);
+    if (true) {
+      history.push('/auth');
+    } else {
+      connectWifi('', '');
+    }
+  }, [history, connectWifi]);
+
+  const handleConnectWifi = useCallback(() => {
+    connectWifi('', '');
+    history.push('/connected');
+  }, [history, connectWifi]);
 
   const handlePair = useCallback(() => {
     const pair = async () => {
@@ -42,114 +61,147 @@ function App({ history }) {
     pair();
   }, [connect, history]);
 
+  useEffect(() => {
+    return history.listen((location, action) => {
+      console.log(location, action);
+      if (action === 'POP'  && location.key) {
+        history.goBack();
+      }
+    });
+  }, [history]);
+
   return (
     <div className="container">
       <div className="dispenser">
         <DispenserImage className="image" />
       </div>
-      <Switch>
-        <Route exact path="/" render={() => (
-          <>
-            <p>
-              Let's pair your Bitcoin Lightning Candy Dispenser
-              and connect it to your local Wi-Fi to get it up and running.
-            </p>
-            <div className="action">
-              <Button onClick={handleStart}>Start setup</Button>
-              <a href="https://sweetbit.io">Get a Bitcoin Lightning Candy Dispenser</a>
-            </div>
-          </>
-        )} />
-        <Route path="/select" render={() => (
-          <>
-            <p>
-              Here are some options how your can pair and connect your
-              Bitcoin Lightning Candy Dispenser.
-            </p>
-            <ul>
-              <li>
-                <a href="#desktop" disabled={!supported}>
-                  <strong>Web app</strong>
-                  <span> – </span>
-                  <span>Pair and connect without having to install an app, control through the Candy Dispenser's own web app.</span>
-                  <span> (</span>
-                  <em>Chrome Desktop only</em>
-                  <span>)</span>
-                </a>
-              </li>
-              <li>
-                <a href="#ios">
-                  <strong>iOS app</strong>
-                  <span> – </span>
-                  <span>Pair, connect and control your Candy Dispenser through its official iOS app.</span>
-                  <span> (</span>
-                  <em>from October</em>
-                  <span>)</span>
-                </a>
-              </li>
-              <li>
-                <a href="#android">
-                  <strong>Android app</strong>
-                  <span> – </span>
-                  <span>Pair, connect and control your Candy Dispenser through its official Android app.</span>
-                  <span> (</span>
-                  <em>from December</em>
-                  <span>)</span>
-                </a>
-              </li>
-            </ul>
-          </>
-        )} />
-        <Route path="/pair" render={() => (
-          <>
-            <p>
-              Plug your Candy Dispenser into a power outlet
-              and wait for it to buzz before you start pairing.
-            </p>
-            <div className="action">
-              <Button onClick={handlePair} loading={connecting}>Pair Candy Dispenser</Button>
-            </div>
-          </>
-        )} />
-        <Route path="/unpaired" render={() => (
-          <>
-            <p>
-              Whoops, no Candy Dispenser could be found. Make sure
-              it's close to your device and that you waited for it to buzz
-              before pairing.
-            </p>
-            <Button>Retry</Button>
-          </>
-        )} />
-        <Route path="/paired" render={() => (
-          <>
-            <p>
-              Congratulations, you've successfully paired your
-              Candy Dispenser. Now let's find a Wi-Fi to connect to.
-            </p>
-            <div className="card">
-              {JSON.stringify(dispenser)}
-            </div>
-            <Button onClick={scanWifi}>Search Wi-Fi</Button>
-          </>
-        )} />
+      <div className="content">
+        <Route exact path="/">
+          {({ match, history }) => (
+            <CSSTransition in={match !== null} timeout={200} classNames={!!match === (history.action === 'PUSH') ? 'right' : 'left'} unmountOnExit>
+              <div className="page">
+                <p>
+                  Let's pair your Bitcoin Lightning Candy Dispenser
+                  and connect it to your local Wi-Fi to get it up and running.
+                </p>
+                <div className="action">
+                  <Button onClick={handleStart}>Start setup</Button>
+                  <a className="secondary" href="https://sweetbit.io">Get a Bitcoin Lightning Candy Dispenser</a>
+                </div>
+              </div>
+            </CSSTransition>
+          )}
+        </Route>
+        <Route path="/select">
+          {({ match, history }) => (
+            <CSSTransition in={match !== null} timeout={200} classNames={!!match === (history.action === 'PUSH') ? 'right' : 'left'} unmountOnExit>
+              <div className="page">
+                <p>
+                  Here are some options how your can pair and connect your
+                  Bitcoin Lightning Candy Dispenser.
+                </p>
+                <ul className="items">
+                  <li className="item">
+                    <button onClick={handleWebChoice} disabled={!supported} className="option">
+                      <strong className="title">Web app</strong>
+                      <span className="separator"> – </span>
+                      <span className="description">Pair and connect without having to install an app, control through the Candy Dispenser's own web app.</span>
+                      <span className="separator"> (</span>
+                      <em className="label">Chrome Desktop only</em>
+                      <span className="separator">)</span>
+                    </button>
+                  </li>
+                  <li className="item">
+                    <button disabled className="option">
+                      <strong className="title">iOS app</strong>
+                      <span className="separator"> – </span>
+                      <span className="description">Pair, connect and control your Candy Dispenser through its official iOS app.</span>
+                      <span className="separator"> (</span>
+                      <em className="label">from October</em>
+                      <span className="separator">)</span>
+                    </button>
+                  </li>
+                  <li className="item">
+                    <button disabled className="option">
+                      <strong className="title">Android app</strong>
+                      <span className="separator"> – </span>
+                      <span className="description">Pair, connect and control your Candy Dispenser through its official Android app.</span>
+                      <span className="separator"> (</span>
+                      <em className="label">from December</em>
+                      <span className="separator">)</span>
+                    </button>
+                  </li>
+                </ul>
+              </div>
+            </CSSTransition>
+          )}
+        </Route>
+        <Route path="/pair">
+          {({ match, history }) => (
+            <CSSTransition in={match !== null} timeout={200} classNames={!!match === (history.action === 'PUSH') ? 'right' : 'left'} unmountOnExit>
+              <div className="page">
+                <p>
+                  Plug your Candy Dispenser into a power outlet
+                  and wait for it to buzz before you start pairing.
+                </p>
+                <div className="action">
+                  <Button onClick={handlePair} loading={connecting}>Pair Candy Dispenser</Button>
+                </div>
+              </div>
+            </CSSTransition>
+          )}
+        </Route>
+        <Route path="/unpaired">
+          {({ match, history }) => (
+            <CSSTransition in={match !== null} timeout={200} classNames={!!match === (history.action === 'PUSH') ? 'right' : 'left'} unmountOnExit>
+              <div className="page">
+                <p>
+                  Whoops, no Candy Dispenser could be found. Make sure
+                  it's close to your device and that you waited for it to buzz
+                  before pairing.
+                </p>
+                <div className="action">
+                  <Button>Retry</Button>
+                </div>
+              </div>
+            </CSSTransition>
+          )}
+        </Route>
+        <Route path="/paired">
+          {({ match, history }) => (
+            <CSSTransition in={match !== null} timeout={200} classNames={!!match === (history.action === 'PUSH') ? 'right' : 'left'} unmountOnExit>
+              <div className="page">
+                <p>
+                  Congratulations, you've successfully paired your
+                  Candy Dispenser. Now let's find a Wi-Fi to connect to.
+                </p>
+                <div className={`info ${!dispenser ? 'loading' : ''}`}>
+                  {dispenser && dispenser.deviceName}
+                </div>
+                <div className="action">
+                  <Button onClick={handleSearchWifi}>Search Wi-Fi</Button>
+                </div>
+              </div>
+            </CSSTransition>
+          )}
+        </Route>
         <Route path="/wifis" render={() => (
           <>
             <p>
               Select a Wi-Fi to connect to.
             </p>
-            <ul>
+            <ul className="items">
               {availableWifis.map(wifi => (
-                <li>
-                  <button onClick={wifi} className="wifi">
+                <li className="item">
+                  <button onClick={handleSelectWifi} className="wifi">
                     <CheckmarkIcon className="icon" />
                     <WifiIcon className="icon" />
                     <span>{wifi}</span>
                   </button>
                 </li>
               ))}
-              <li>
-                <button className="wifi">
+              <li className="item">
+                <button onClick={handleSelectWifi} className="wifi">
                   <SecureWifiIcon className="icon" />
                   <span>olive</span>
                 </button>
@@ -174,7 +226,9 @@ function App({ history }) {
                 <label htmlFor="password">Password</label>
               </div>
             </div>
-            <Button onClick={handleSelectWifi}>Connect Wi-Fi</Button>
+            <div className="action">
+              <Button onClick={handleConnectWifi}>Connect Wi-Fi</Button>
+            </div>
           </>
         )} />
         <Route path="/unconnected" render={() => (
@@ -182,7 +236,9 @@ function App({ history }) {
             <p>
               Oh no, the selected Wi-Fi couldn't be connected to.
             </p>
-            <Button>Retry</Button>
+            <div className="action">
+              <Button>Retry</Button>
+            </div>
           </>
         )} />
         <Route path="/connected" render={() => (
@@ -191,10 +247,8 @@ function App({ history }) {
               Fantastic, the Candy Dispenser is connected.
               Give it a moment until it's ready for you.
             </p>
-            <Spinner />
             <p>
-              Congratulations, your Candy Dispenser is up and running.
-              Use any of the below options to configure it to your needs.
+              <Spinner />
             </p>
           </>
         )} />
@@ -204,7 +258,9 @@ function App({ history }) {
               Oh shoot, the Candy Dispenser wasn't able to establish a connection
               to the internet.
             </p>
-            <Button>Retry</Button>
+            <div className="action">
+              <Button>Retry</Button>
+            </div>
           </>
         )} />
         <Route path="/completed" render={() => (
@@ -215,9 +271,51 @@ function App({ history }) {
             </p>
           </>
         )} />
-        <Redirect to="/" />
-      </Switch>
+      </div>
       <style jsx>{`
+        * {
+          box-sizing: border-box;
+        }
+        .content {
+          position: relative;
+        }
+        .page {
+          position: absolute;
+          top: 0;
+          width: 100%;
+        }
+        .page.left-enter {
+          opacity: 0;
+          transform: translateX(-100px);
+        }
+        .page.left-enter-active {
+          opacity: 1;
+          transform: translateX(0);
+          transition: opacity 200ms, transform 200ms;
+        }
+        .page.left-exit {
+        }
+        .page.left-exit-active {
+          opacity: 0;
+          transform: translateX(-100px);
+          transition: opacity 200ms, transform 200ms;
+        }
+        .page.right-enter {
+          opacity: 0;
+          transform: translateX(100px);
+        }
+        .page.right-enter-active {
+          opacity: 1;
+          transform: translateX(0);
+          transition: opacity 200ms, transform 200ms;
+        }
+        .page.right-exit {
+        }
+        .page.right-exit-active {
+          opacity: 0;
+          transform: translateX(100px);
+          transition: opacity 200ms, transform 200ms;
+        }
         .dispenser {
           padding-bottom: 40px;
         }
@@ -230,12 +328,20 @@ function App({ history }) {
           padding: 0 20px;
           width: 100%;
           text-align: center;
+          min-height: 100vh;
+          padding: 80px 0;
+          display: flex;
+          flex-direction: column;
         }
         p {
           max-width: 420px;
           font-size: 18px;
           width: 100%;
           margin: 0 auto;
+          line-height: 1.4;
+        }
+        p + p {
+          padding-top: 16px;
         }
         .screen {
           text-align: center;
@@ -246,22 +352,17 @@ function App({ history }) {
           height: 80px;
           background-color: gray;
         }
-        button {
-          padding: 20px;
-        }
-        button.wifi {
-          display: block;
-          border: none;
-          background: none;
-          font-size: inherit;
-          text-align: left;
-          width: 100%;
-          color: red;
-        }
         :global(.icon) {
           width: 24px;
           height: 24px;
           fill: currentColor;
+        }
+        .action {
+          padding-top: 60px;
+        }
+        .action .secondary {
+          padding-top: 16px;
+          display: inline-block;
         }
         .action > :global(button) {
           display: block;
@@ -311,12 +412,78 @@ function App({ history }) {
           font-size: 14px;
           color: #5264AE;
         }
+        .items {
+          list-style: none;
+          padding: 0;
+          max-width: 460px;
+          width: 100%;
+          margin: 0 auto;
+          padding-top: 30px;
+        }
+        .item {
+        }
+        .option {
+          position: relative;
+          display: block;
+          width: 100%;
+          padding: 20px;
+          text-align: left;
+          background: white;
+          box-shadow: 0 3px 8px #efefef;
+          color: #333;
+          text-decoration: none;
+          font-size: inherit;
+          border: none;
+        }
+        .option:hover {
+        }
+        .option .title {
+          display: block;
+          color: black;
+        }
+        .option .separator {
+          display: none;
+        }
+        .option .description {
+          display: block;
+          padding-top: 5px;
+        }
+        .option .label {
+          display: inline-block;
+          font-size: 90%;
+          font-style: normal;
+          background: #5335B8;
+          color: white;
+          padding: 3px 8px;
+          border-radius: 6px;
+          position: absolute;
+          top: 12px;
+          right: 15px;
+        }
+        .wifi {
+          position: relative;
+          display: block;
+          width: 100%;
+          padding: 10px 20px;
+          text-align: left;
+          background: white;
+          box-shadow: 0 3px 8px #efefef;
+          color: #333;
+          text-decoration: none;
+          font-size: inherit;
+          border: none;
+        }
+        .password {
+          max-width: 320px;
+          width: 100%;
+          margin: 0 auto;
+        }
       `}</style>
       <style jsx global>{`
         body {
           background-color: #f2f2f2;
           margin: 0;
-          padding: 80px 0;
+          padding: 0;
           font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
           -webkit-font-smoothing: antialiased;
           -moz-osx-font-smoothing: grayscale;

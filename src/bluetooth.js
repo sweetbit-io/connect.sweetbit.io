@@ -57,11 +57,11 @@ function availableWifisReducer(state = [], action) {
 }
 
 export function useBluetooth() {
-  const [dispenser, setDispenser] = useReducer(dispenserReducer);
+  const [dispenser, setDispenser] = useReducer(dispenserReducer, null);
   const [connecting, setConnecting] = useState(false);
   const [server, setServer] = useState(false);
   const [force, forceUpdate] = useReducer(x => x + 1, 0);
-  const [availableWifis, dispatchAvailableWifisAction] = useReducer(availableWifisReducer);
+  const [availableWifis, dispatchAvailableWifisAction] = useReducer(availableWifisReducer, []);
 
   async function connect() {
     setConnecting(true);
