@@ -12,11 +12,9 @@ const DISCOVERED_WIFI_SSID = 'ca000004-75dd-4a0e-b688-66b7df342cc6';
 const WIFI_SSID_STRING = 'ca000005-75dd-4a0e-b688-66b7df342cc6';
 const WIFI_PSK_STRING = 'ca000006-75dd-4a0e-b688-66b7df342cc6';
 const WIFI_CONNECT_SIGNAL = 'ca000007-75dd-4a0e-b688-66b7df342cc6';
-const ONION_API = 'ca000008-75dd-4a0e-b688-66b7df342cc6';
+// const ONION_API = 'ca000008-75dd-4a0e-b688-66b7df342cc6';
 
-function supported() {
-  return 'bluetooth' in navigator;
-}
+const supported = 'bluetooth' in navigator;
 
 async function characteristicByte(characteristic) {
   const value = await characteristic.readValue();
@@ -153,7 +151,7 @@ export function useBluetooth() {
           ipAddressCharacteristic,
           discoveredWifiSsidCharacteristic,
           wifiSsidStringCharacteristic,
-          onionApiCharacteristic,
+          // onionApiCharacteristic,
         ] = await Promise.all([
           await service.getCharacteristic(DEVICE_NAME),
           await service.getCharacteristic(MANUFACTURER_NAME),
@@ -163,7 +161,7 @@ export function useBluetooth() {
           await service.getCharacteristic(IP_ADDRESS),
           await service.getCharacteristic(DISCOVERED_WIFI_SSID),
           await service.getCharacteristic(WIFI_SSID_STRING),
-          await service.getCharacteristic(ONION_API),
+          // await service.getCharacteristic(ONION_API),
         ]);
 
         // const deviceNameCharacteristic = await service.getCharacteristic(DEVICE_NAME);
@@ -183,7 +181,7 @@ export function useBluetooth() {
           networkAvailabilityStatus,
           ipAddress,
           ssidString,
-          onionApi,
+          // onionApi,
         ] = await Promise.all([
           characteristicText(deviceNameCharacteristic),
           characteristicText(manufacturerNameCharacteristic),
@@ -192,7 +190,7 @@ export function useBluetooth() {
           characteristicByte(networkAvailabilityStatusCharacteristic),
           characteristicText(ipAddressCharacteristic),
           characteristicText(wifiSsidStringCharacteristic),
-          characteristicText(onionApiCharacteristic),
+          // characteristicText(onionApiCharacteristic),
         ]);
 
         await networkAvailabilityStatusCharacteristic.startNotifications();
@@ -211,11 +209,11 @@ export function useBluetooth() {
         };
         subscriptions.push(wifiSsidStringCharacteristic);
 
-        await discoveredWifiSsidCharacteristic.startNotifications();
-        discoveredWifiSsidCharacteristic.oncharacteristicvaluechanged = async (event) => {
-          dispatchAvailableWifisAction(text(event.target.value));
-        };
-        subscriptions.push(discoveredWifiSsidCharacteristic);
+        // await discoveredWifiSsidCharacteristic.startNotifications();
+        // discoveredWifiSsidCharacteristic.oncharacteristicvaluechanged = async (event) => {
+        //   dispatchAvailableWifisAction(text(event.target.value));
+        // };
+        // subscriptions.push(discoveredWifiSsidCharacteristic);
 
         setDispenser({
           deviceName,
@@ -225,7 +223,7 @@ export function useBluetooth() {
           networkAvailabilityStatus,
           ipAddress,
           ssidString,
-          onionApi,
+          // onionApi,
         });
       } catch (e) {
         console.error(`unable to read: ${e}`);
