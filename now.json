@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "name": "candy-garden",
-  "alias": "candy.garden",
-  "regions": ["bru"],
+  "name": "connect.sweetbit.io",
+  "alias": "connect.sweetbit.io",
+  "regions": ["bru", "sfo", "syd"],
   "scope": "the-lightning-land",
   "env": {
   },
