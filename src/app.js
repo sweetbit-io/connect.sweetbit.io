@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect } from 'react';
-import { Route, Redirect } from 'react-router-dom';
+import { Route } from 'react-router-dom';
 import { CSSTransition } from 'react-transition-group';
 import { withRouter } from "react-router";
 import Button from './components/button';
@@ -185,92 +185,92 @@ function App({ history }) {
             </CSSTransition>
           )}
         </Route>
-        <Route path="/wifis" render={() => (
-          <>
-            <p>
-              Select a Wi-Fi to connect to.
-            </p>
-            <ul className="items">
-              {availableWifis.map(wifi => (
-                <li className="item">
-                  <button onClick={handleSelectWifi} className="wifi">
-                    <CheckmarkIcon className="icon" />
-                    <WifiIcon className="icon" />
-                    <span>{wifi}</span>
-                  </button>
-                </li>
-              ))}
-              <li className="item">
-                <button onClick={handleSelectWifi} className="wifi">
-                  <SecureWifiIcon className="icon" />
-                  <span>olive</span>
-                </button>
-              </li>
-            </ul>
-          </>
-        )} />
-        <Route path="/auth" render={() => (
-          <>
-            <p>
-              Enter the Wi-Fi password.
-            </p>
-            <div className="password">
-              <div className="group centered">
-                <input
-                  placeholder="Password"
-                  // onChange={this.handleEmailChanged}
-                  required
-                  name="password"
-                  type="password"
-                />
-                <label htmlFor="password">Password</label>
+        <Route path="/wifis">
+          {({ match, history }) => (
+            <CSSTransition in={match !== null} timeout={200} classNames={!!match === (history.action === 'PUSH') ? 'right' : 'left'} unmountOnExit>
+              <div className="page">
+                <p>
+                  Select a Wi-Fi to connect to.
+                </p>
+                <ul className="items">
+                  {availableWifis.map(wifi => (
+                    <li className="item">
+                      <button onClick={handleSelectWifi} className="wifi">
+                        <CheckmarkIcon className="check" />
+                        <Spinner className="spinner" />
+                        <WifiIcon className="icon" />
+                        <span className="ssid">{wifi}</span>
+                      </button>
+                    </li>
+                  ))}
+                  <li className="item">
+                    <button onClick={handleSelectWifi} className="wifi">
+                      <CheckmarkIcon className="check" />
+                      <Spinner className="spinner" />
+                      <SecureWifiIcon className="icon" />
+                      <span className="ssid">olive</span>
+                    </button>
+                  </li>
+                </ul>
               </div>
-            </div>
-            <div className="action">
-              <Button onClick={handleConnectWifi}>Connect Wi-Fi</Button>
-            </div>
-          </>
-        )} />
-        <Route path="/unconnected" render={() => (
-          <>
-            <p>
-              Oh no, the selected Wi-Fi couldn't be connected to.
-            </p>
-            <div className="action">
-              <Button>Retry</Button>
-            </div>
-          </>
-        )} />
-        <Route path="/connected" render={() => (
-          <>
-            <p>
-              Fantastic, the Candy Dispenser is connected.
-              Give it a moment until it's ready for you.
-            </p>
-            <p>
-              <Spinner />
-            </p>
-          </>
-        )} />
-        <Route path="/failed" render={() => (
-          <>
-            <p>
-              Oh shoot, the Candy Dispenser wasn't able to establish a connection
-              to the internet.
-            </p>
-            <div className="action">
-              <Button>Retry</Button>
-            </div>
-          </>
-        )} />
-        <Route path="/completed" render={() => (
-          <>
-            <p>
-              Congratulations, your Candy Dispenser is up and running.
-              Use any of the below options to configure it to your needs.
-            </p>
-          </>
-        )} />
+            </CSSTransition>
+          )}
+        </Route>
+        <Route path="/auth">
+          {({ match, history }) => (
+            <CSSTransition in={match !== null} timeout={200} classNames={!!match === (history.action === 'PUSH') ? 'right' : 'left'} unmountOnExit>
+              <div className="page">
+                <p>
+                  Enter the Wi-Fi password.
+                </p>
+                <div className="password">
+                  <div className="group centered">
+                    <input
+                      placeholder="Password"
+                      // onChange={this.handleEmailChanged}
+                      required
+                      name="password"
+                      type="password"
+                    />
+                    <label htmlFor="password">Password</label>
+                  </div>
+                </div>
+                <div className="action">
+                  <Button onClick={handleConnectWifi}>Connect Wi-Fi</Button>
+                </div>
+              </div>
+            </CSSTransition>
+          )}
+        </Route>
+        <Route path="/unconnected">
+          {({ match, history }) => (
+            <CSSTransition in={match !== null} timeout={300} classNames={!!match === (history.action === 'PUSH') ? 'right' : 'left'} unmountOnExit>
+              <div className="page">
+                <p>
+                  Oh no, the selected Wi-Fi couldn't be connected to.
+                </p>
+                <div className="action">
+                  <Button>Retry</Button>
+                </div>
+              </div>
+            </CSSTransition>
+          )}
+        </Route>
+        <Route path="/connected">
+          {({ match, history }) => (
+            <CSSTransition in={match !== null} timeout={300} classNames={!!match === (history.action === 'PUSH') ? 'right' : 'left'} unmountOnExit>
+              <div className="page">
+                <p>
+                  Fantastic, the Candy Dispenser is connected.
+                  Give it a moment until it's ready for you.
+                </p>
+                <p>
+                  <Spinner />
+                </p>
+              </div>
+            </CSSTransition>
+          )}
+        </Route>
       </div>
       <style jsx>{`
         * {
@@ -291,14 +291,14 @@ function App({ history }) {
         .page.left-enter-active {
           opacity: 1;
           transform: translateX(0);
-          transition: opacity 200ms, transform 200ms;
+          transition: opacity 300ms, transform 300ms;
         }
         .page.left-exit {
         }
         .page.left-exit-active {
           opacity: 0;
           transform: translateX(-100px);
-          transition: opacity 200ms, transform 200ms;
+          transition: opacity 300ms, transform 300ms;
         }
         .page.right-enter {
           opacity: 0;
@@ -307,14 +307,14 @@ function App({ history }) {
         .page.right-enter-active {
           opacity: 1;
           transform: translateX(0);
-          transition: opacity 200ms, transform 200ms;
+          transition: opacity 300ms, transform 300ms;
         }
         .page.right-exit {
         }
         .page.right-exit-active {
           opacity: 0;
           transform: translateX(100px);
-          transition: opacity 200ms, transform 200ms;
+          transition: opacity 300ms, transform 300ms;
         }
         .dispenser {
           padding-bottom: 40px;
@@ -461,8 +461,9 @@ function App({ history }) {
           right: 15px;
         }
         .wifi {
+          display: flex;
+          align-items: center;
           position: relative;
-          display: block;
           width: 100%;
           padding: 10px 20px;
           text-align: left;
@@ -473,10 +474,25 @@ function App({ history }) {
           font-size: inherit;
           border: none;
         }
+        .wifi .ssid {
+          flex: 1 1 auto;
+        }
         .password {
           max-width: 320px;
           width: 100%;
           margin: 0 auto;
+        }
+        .info {
+          max-width: 200px;
+          margin: 0 auto;
+          margin-top: 30px;
+          display: block;
+          width: 100%;
+          padding: 20px;
+          text-align: center;
+          background: white;
+          box-shadow: 0 3px 8px #efefef;
+          color: #333;
         }
       `}</style>
       <style jsx global>{`
