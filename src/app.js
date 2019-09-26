@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect } from 'react';
-import { Route } from 'react-router-dom';
+import { Route, useHistory } from 'react-router-dom';
 import { CSSTransition } from 'react-transition-group';
-import { withRouter } from "react-router";
 import Button from './components/button';
 import Spinner from './components/spinner';
 import { useBluetooth } from './bluetooth';
@@ -10,7 +9,7 @@ import { ReactComponent as WifiIcon } from './wifi.svg';
 import { ReactComponent as SecureWifiIcon } from './wifi-secure.svg';
 import { ReactComponent as DispenserImage } from './dispenser.svg';
 
-function App({ history }) {
+function App() {
   const {
     supported,
     connecting,
@@ -22,6 +21,8 @@ function App({ history }) {
     scanWifi,
     connectWifi,
   } = useBluetooth();
+
+  const history = useHistory();
 
   const handleStart = useCallback(() => {
     if (!supported) {
@@ -62,10 +63,10 @@ function App({ history }) {
   }, [connect, history]);
 
   useEffect(() => {
-    return history.listen((location, action) => {
+    return history.block((location, action) => {
       console.log(location, action);
-      if (action === 'POP'  && location.key) {
-        history.goBack();
+      if (action === 'POP' && location.key) {
+        return 'block';
       }
     });
   }, [history]);
@@ -512,4 +513,4 @@ function App({ history }) {
   );
 }
 
-export default withRouter(App);
+export default App;
