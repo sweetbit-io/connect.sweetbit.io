@@ -1,6 +1,7 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback } from 'react';
 import { Route, useHistory } from 'react-router-dom';
 import { CSSTransition } from 'react-transition-group';
+import { useForwardNavigationBlocker } from './hooks/forward-navigation-blocker';
 import Button from './components/button';
 import Spinner from './components/spinner';
 import { useBluetooth } from './bluetooth';
@@ -62,14 +63,7 @@ function App() {
     pair();
   }, [connect, history]);
 
-  useEffect(() => {
-    return history.block((location, action) => {
-      console.log(location, action);
-      if (action === 'POP' && location.key) {
-        return 'block';
-      }
-    });
-  }, [history]);
+  useForwardNavigationBlocker(history);
 
   return (
     <div className="container">
