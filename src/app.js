@@ -5,11 +5,11 @@ import classNames from 'classnames';
 import { useForwardNavigationBlocker } from './hooks/forward-navigation-blocker';
 import Button from './components/button';
 import Spinner from './components/spinner';
-import { useBluetooth } from './bluetooth';
-import { ReactComponent as CheckmarkIcon } from './checkmark.svg';
-import { ReactComponent as WifiIcon } from './wifi.svg';
-import { ReactComponent as SecureWifiIcon } from './wifi-secure.svg';
-import { ReactComponent as DispenserImage } from './dispenser.svg';
+import { useBluetooth } from './hooks/bluetooth';
+import { ReactComponent as CheckmarkIcon } from './icons/checkmark.svg';
+import { ReactComponent as WifiIcon } from './icons/wifi.svg';
+import { ReactComponent as SecureWifiIcon } from './icons/wifi-secure.svg';
+import { ReactComponent as DispenserImage } from './icons/dispenser.svg';
 
 function App() {
   const {
