@@ -1,6 +1,7 @@
 import React, { useCallback } from 'react';
 import { Route, useHistory } from 'react-router-dom';
 import { CSSTransition } from 'react-transition-group';
+import classNames from 'classnames';
 import { useForwardNavigationBlocker } from './hooks/forward-navigation-blocker';
 import Button from './components/button';
 import Spinner from './components/spinner';
@@ -50,7 +51,8 @@ function App() {
     }
   }, [history, connectWifi]);
 
-  const handleConnectWifi = useCallback(() => {
+  const handleConnectWifi = useCallback((e) => {
+    e.preventDefault();
     connectWifi('', '');
     history.push('/connected');
   }, [history, connectWifi]);
@@ -189,23 +191,24 @@ function App() {
                 </p>
                 <ul className="items">
                   {availableWifis.map(wifi => (
-                    <li className="item">
-                      <button onClick={handleSelectWifi} className="wifi">
-                        <CheckmarkIcon className="check" />
-                        <Spinner className="spinner" />
-                        <WifiIcon className="icon" />
-                        <span className="ssid">{wifi}</span>
+                    <li className="item" key={wifi.ssid}>
+                      <button onClick={handleSelectWifi} className={classNames('wifi', {
+                        selected: dispenser && dispenser.ssidString === wifi.ssid,
+                        connecting: false,
+                      })}>
+                        {wifi.public ?  (
+                          <WifiIcon className="icon" />
+                        ) : (
+                          <SecureWifiIcon className="icon" />
+                        )}
+                        <span className="ssid">{wifi.ssid}</span>
+                        <span className="indicator">
+                          <CheckmarkIcon className="check" />
+                          <Spinner className="spinner" />
+                        </span>
                       </button>
                     </li>
                   ))}
-                  <li className="item">
-                    <button onClick={handleSelectWifi} className="wifi">
-                      <CheckmarkIcon className="check" />
-                      <Spinner className="spinner" />
-                      <SecureWifiIcon className="icon" />
-                      <span className="ssid">olive</span>
-                    </button>
-                  </li>
                 </ul>
               </div>
             </CSSTransition>
@@ -218,21 +221,23 @@ function App() {
                 <p>
                   Enter the Wi-Fi password.
                 </p>
-                <div className="password">
-                  <div className="group centered">
-                    <input
-                      placeholder="Password"
-                      // onChange={this.handleEmailChanged}
-                      required
-                      name="password"
-                      type="password"
-                    />
-                    <label htmlFor="password">Password</label>
+                <form onSubmit={handleConnectWifi}>
+                  <div className="password">
+                    <div className="group centered">
+                      <input
+                        placeholder="Password"
+                        // onChange={this.handleEmailChanged}
+                        required
+                        name="password"
+                        type="password"
+                      />
+                      <label htmlFor="password">Password</label>
+                    </div>
                   </div>
-                </div>
-                <div className="action">
-                  <Button onClick={handleConnectWifi}>Connect Wi-Fi</Button>
-                </div>
+                  <div className="action">
+                    <Button type="submit">Connect Wi-Fi</Button>
+                  </div>
+                </form>
               </div>
             </CSSTransition>
           )}
@@ -410,7 +415,7 @@ function App() {
         .items {
           list-style: none;
           padding: 0;
-          max-width: 460px;
+          max-width: 360px;
           width: 100%;
           margin: 0 auto;
           padding-top: 30px;
@@ -469,8 +474,35 @@ function App() {
           font-size: inherit;
           border: none;
         }
+        .wifi :global(.icon) {
+          display: inline-block;
+          padding-right: 10px;
+        }
         .wifi .ssid {
           flex: 1 1 auto;
+        }
+        .wifi .indicator {
+          display: inline-block;
+          position: relative;
+          flex: 0 0 auto;
+          padding-left: 10px;
+        }
+        .wifi .indicator :global(.check) {
+          width: 24px;
+          height: 24px;
+          opacity: 0;
+        }
+        .wifi.selected .indicator :global(.check) {
+          opacity: 1;
+        }
+        .wifi .indicator :global(.spinner) {
+          position: absolute;
+          top: 0;
+          left: 0;
+          opacity: 0;
+        }
+        .wifi.connecting .indicator :global(.spinner) {
+          opacity: 1;
         }
         .password {
           max-width: 320px;

@@ -47,10 +47,12 @@ function dispenserReducer(state = null, patch) {
 
 // TODO(davidknezic) remove this
 function availableWifisReducer(state = [], action) {
-  console.log(action);
-
-  if (action) {
-    state = action.split('\t');
+  if (typeof action === 'string') {
+    state = action.split('\t').map(ssid => ({
+      ssid,
+    }));
+  } else if (Array.isArray(action)) {
+    state = action;
   }
 
   return state;
@@ -62,6 +64,20 @@ export function useBluetooth() {
   const [server, setServer] = useState(false);
   const [force, forceUpdate] = useReducer(x => x + 1, 0);
   const [availableWifis, dispatchAvailableWifisAction] = useReducer(availableWifisReducer, []);
+
+  // TODO(dave): remove
+  useEffect(() => {
+    dispatchAvailableWifisAction([{
+      ssid: 'onion',
+      public: false,
+    }, {
+      ssid: 'olive',
+      public: true,
+    }, {
+      ssid: '🍭',
+      public: false,
+    }]);
+  }, []);
 
   async function connect() {
     setConnecting(true);
