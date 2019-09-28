@@ -1,11 +1,11 @@
 import React from 'react';
 import Spinner from './spinner';
 
-export default ({ children, onClick, submit, loading }) => (
+export default ({ children, onClick, type, loading }) => (
   <button
     onClick={onClick}
     className={`submit ${loading ? 'loading' : ''}`}
-    type={submit ? 'submit' : 'button'}
+    type={type || 'button'}
   >
     <span className="label">{children}</span>
     <span className="spinner">
