@@ -437,6 +437,9 @@ function App() {
         }
         .option:hover {
         }
+        .option:focus {
+          z-index: 1;
+        }
         .option .title {
           display: block;
           color: black;
