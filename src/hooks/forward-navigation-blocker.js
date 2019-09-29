@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 
 export function useForwardNavigationBlocker(history) {
   useEffect(() => {
-    const stack = [undefined];
+    const stack = [history.location.key];
 
     return history.block((location, action) => {
       if (action === 'PUSH') {
@@ -14,6 +14,7 @@ export function useForwardNavigationBlocker(history) {
         } else {
           return 'block';
         }
+      } else if (action === 'REPLACE') {
       }
     });
   }, [history]);

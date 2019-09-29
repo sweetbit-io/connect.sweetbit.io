@@ -5,6 +5,7 @@
   "dependencies": {
     "@craco/craco": "^5.4.0",
     "classnames": "^2.2.6",
+    "qrcode.react": "^0.9.3",
     "react": "^16.9.0",
     "react-dom": "^16.9.0",
     "react-modal": "^3.10.1",

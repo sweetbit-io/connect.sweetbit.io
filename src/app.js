@@ -1,7 +1,8 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { Route, useHistory } from 'react-router-dom';
 import { CSSTransition } from 'react-transition-group';
 import classNames from 'classnames';
+import QRCode from 'qrcode.react';
 import { useForwardNavigationBlocker } from './hooks/forward-navigation-blocker';
 import Button from './components/button';
 import Spinner from './components/spinner';
@@ -12,6 +13,14 @@ import { ReactComponent as SecureWifiIcon } from './icons/wifi-secure.svg';
 import { ReactComponent as DispenserImage } from './icons/dispenser.svg';
 
 function App() {
+  const history = useHistory();
+
+  useEffect(() => {
+    if (history.location.pathname !== '/') {
+      history.replace('/');
+    }
+  }, [history]);
+
   const {
     supported,
     connecting,
@@ -24,10 +33,8 @@ function App() {
     connectWifi,
   } = useBluetooth();
 
-  const history = useHistory();
-
   const handleStart = useCallback(() => {
-    if (!supported) {
+    if (supported) {
       history.push('/pair');
     } else {
       history.push('/select');
@@ -60,6 +67,7 @@ function App() {
   const handlePair = useCallback(() => {
     const pair = async () => {
       await connect();
+      // TODO: only proceed when data is loaded
       history.push('/paired');
     };
     pair();
@@ -100,11 +108,11 @@ function App() {
                 <ul className="items">
                   <li className="item">
                     <button onClick={handleWebChoice} disabled={!supported} className="option">
-                      <strong className="title">Web app</strong>
+                      <strong className="title">connect.sweetbit.io</strong>
                       <span className="separator"> – </span>
                       <span className="description">Pair and connect without having to install an app, control through the Candy Dispenser's own web app.</span>
                       <span className="separator"> (</span>
-                      <em className="label">Chrome Desktop only</em>
+                      <em className={classNames('label', { alert: !supported })}>Chrome Desktop only</em>
                       <span className="separator">)</span>
                     </button>
                   </li>
@@ -263,6 +271,14 @@ function App() {
                 <p>
                   Fantastic, the Candy Dispenser is connected.
                   Give it a moment until it's ready for you.
+                </p>
+                <p>
+                  <QRCode
+                    className="qrcode"
+                    size={null}
+                    renderAs="svg"
+                    value="http://lyub345d556faxlt.onion"
+                  />
                 </p>
                 <p>
                   <Spinner />
@@ -435,6 +451,9 @@ function App() {
           font-size: inherit;
           border: none;
         }
+        .option:disabled {
+          color: #999;
+        }
         .option:hover {
         }
         .option:focus {
@@ -442,7 +461,6 @@ function App() {
         }
         .option .title {
           display: block;
-          color: black;
         }
         .option .separator {
           display: none;
@@ -453,7 +471,7 @@ function App() {
         }
         .option .label {
           display: inline-block;
-          font-size: 90%;
+          font-size: 11px;
           font-style: normal;
           background: #5335B8;
           color: white;
@@ -462,6 +480,12 @@ function App() {
           position: absolute;
           top: 12px;
           right: 15px;
+        }
+        .option:disabled .label {
+          background: #333;
+        }
+        .option .label.alert {
+          background: #914146;
         }
         .wifi {
           display: flex;
@@ -476,6 +500,9 @@ function App() {
           text-decoration: none;
           font-size: inherit;
           border: none;
+        }
+        .wifi:focus {
+          z-index: 1;
         }
         .wifi :global(.icon) {
           display: inline-block;
@@ -524,6 +551,13 @@ function App() {
           box-shadow: 0 3px 8px #efefef;
           color: #333;
         }
+        :global(.qrcode) {
+          display: inline-block;
+          padding: 25px;
+          background: white;
+          max-width: 220px;
+          box-shadow: 0 3px 8px #efefef;
+        }
       `}</style>
       <style jsx global>{`
         body {
@@ -536,6 +570,19 @@ function App() {
         }
         code {
           font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
+        }
+        @keyframes fadein {
+          0% {
+            transform: scale(1.2);
+            opacity: 0;
+          }
+          100% {
+            transform: scale(1);
+            opacity: 1;
+          }
+        }
+        #root {
+          animation: 0.3s ease fadein;
         }
       `}</style>
     </div>
