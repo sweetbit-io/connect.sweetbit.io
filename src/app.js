@@ -1,9 +1,10 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Route, useHistory } from 'react-router-dom';
 import { CSSTransition } from 'react-transition-group';
 import classNames from 'classnames';
 import QRCode from 'qrcode.react';
 import { useForwardNavigationBlocker } from './hooks/forward-navigation-blocker';
+import { useInterval } from './hooks/interval';
 import Button from './components/button';
 import Spinner from './components/spinner';
 import { useBluetooth } from './hooks/bluetooth';
@@ -50,12 +51,20 @@ function App() {
     history.push('/pair');
   }, [history]);
 
-  const handleSelectWifi = useCallback(() => {
-    if (true) {
-      history.push('/auth');
-    } else {
-      connectWifi('', '');
-    }
+  const [selectedWifi, setSelectedWifi] = useState(null);
+
+  const createHandleSelectWifi = useCallback((wifi) => {
+    return (e) => {
+      e.preventDefault();
+
+      setSelectedWifi(wifi);
+
+      if (wifi.encryption !== 'none') {
+        history.push('/auth');
+      } else {
+        connectWifi(wifi.ssid, '');
+      }
+    };
   }, [history, connectWifi]);
 
   const handleConnectWifi = useCallback((e) => {
@@ -74,6 +83,12 @@ function App() {
   }, [connect, history]);
 
   useForwardNavigationBlocker(history);
+
+  const scanWifiCondition = useCallback(() => {
+    return history.location.pathname === '/wifis';
+  }, [history]);
+
+  useInterval(scanWifi, 3000, scanWifiCondition);
 
   return (
     <div className="container">
@@ -200,11 +215,11 @@ function App() {
                 <ul className="items">
                   {availableWifis.map(wifi => (
                     <li className="item" key={wifi.ssid}>
-                      <button onClick={handleSelectWifi} className={classNames('wifi', {
-                        selected: dispenser && dispenser.ssidString === wifi.ssid,
+                      <button onClick={createHandleSelectWifi(wifi)} className={classNames('wifi', {
+                        selected: dispenser && dispenser.ssid === wifi.ssid,
                         connecting: false,
                       })}>
-                        {wifi.public ?  (
+                        {wifi.encryption === 'none' ?  (
                           <WifiIcon className="icon" />
                         ) : (
                           <SecureWifiIcon className="icon" />
@@ -230,14 +245,36 @@ function App() {
                   Enter the Wi-Fi password.
                 </p>
                 <form onSubmit={handleConnectWifi}>
+                  {selectedWifi && (
+                    <input
+                      type="hidden"
+                      name={selectedWifi.encryption !== 'enterprise' ? 'username' : 'ssid'}
+                      autoComplete={selectedWifi.encryption !== 'enterprise' && 'username'}
+                      value={selectedWifi.ssid}
+                    />
+                  )}
+                  {selectedWifi && selectedWifi.encryption === 'enterprise' && (
+                    <div className="username">
+                      <div className="group centered">
+                        <input
+                          placeholder="Username"
+                          required
+                          name="username"
+                          type="text"
+                          autoComplete="username"
+                        />
+                        <label htmlFor="username">Username</label>
+                      </div>
+                    </div>
+                  )}
                   <div className="password">
                     <div className="group centered">
                       <input
                         placeholder="Password"
-                        // onChange={this.handleEmailChanged}
                         required
                         name="password"
                         type="password"
+                        autoComplete="current-password"
                       />
                       <label htmlFor="password">Password</label>
                     </div>
@@ -534,7 +571,7 @@ function App() {
         .wifi.connecting .indicator :global(.spinner) {
           opacity: 1;
         }
-        .password {
+        .username, .password {
           max-width: 320px;
           width: 100%;
           margin: 0 auto;

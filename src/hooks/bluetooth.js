@@ -1,18 +1,11 @@
 import { useEffect, useReducer, useState }  from 'react';
 
 const SERVICE_ID = 'ca000000-75dd-4a0e-b688-66b7df342cc6';
-const DEVICE_NAME = 0x2A00;
-const MANUFACTURER_NAME = 0x2A29;
-// const SERIAL_NUMBER = 0x2A25;
-const MODEL_NUMBER = 0x2A24;
-const NETWORK_AVAILABILITY_STATUS = 'ca000001-75dd-4a0e-b688-66b7df342cc6';
-const IP_ADDRESS = 'ca000002-75dd-4a0e-b688-66b7df342cc6';
-const WIFI_SCAN_SIGNAL = 'ca000003-75dd-4a0e-b688-66b7df342cc6';
-const DISCOVERED_WIFI_SSID = 'ca000004-75dd-4a0e-b688-66b7df342cc6';
-const WIFI_SSID_STRING = 'ca000005-75dd-4a0e-b688-66b7df342cc6';
-const WIFI_PSK_STRING = 'ca000006-75dd-4a0e-b688-66b7df342cc6';
-const WIFI_CONNECT_SIGNAL = 'ca000007-75dd-4a0e-b688-66b7df342cc6';
-// const ONION_API = 'ca000008-75dd-4a0e-b688-66b7df342cc6';
+const STATUS = 'ca001000-75dd-4a0e-b688-66b7df342cc6';
+const SCAN_WIFI = 'ca002000-75dd-4a0e-b688-66b7df342cc6';
+const DISCOVERED_WIFI = 'ca003000-75dd-4a0e-b688-66b7df342cc6';
+const CONNECT_WIFI = 'ca004000-75dd-4a0e-b688-66b7df342cc6';
+const ONION_API = 'ca005000-75dd-4a0e-b688-66b7df342cc6';
 
 const supported = 'bluetooth' in navigator;
 
@@ -30,8 +23,12 @@ async function byte(value) {
   return value.getUint8(0);
 }
 
-async function text(value) {
+function text(value) {
   return new TextDecoder('utf-8').decode(value);
+}
+
+function json(value) {
+  return JSON.parse(new TextDecoder('utf-8').decode(value));
 }
 
 function dispenserReducer(state = null, patch) {
@@ -45,17 +42,15 @@ function dispenserReducer(state = null, patch) {
   };
 }
 
-// TODO(davidknezic) remove this
 function availableWifisReducer(state = [], action) {
-  if (typeof action === 'string') {
-    state = action.split('\t').map(ssid => ({
-      ssid,
-    }));
-  } else if (Array.isArray(action)) {
-    state = action;
+  const existingIndex = state.findIndex(e => e.ssid === action.ssid)
+  if (existingIndex >= 0) {
+    state[existingIndex] = action;
+  } else {
+    state.push(action);
   }
 
-  return state;
+  return [...state];
 }
 
 export function useBluetooth() {
@@ -65,32 +60,21 @@ export function useBluetooth() {
   const [force, forceUpdate] = useReducer(x => x + 1, 0);
   const [availableWifis, dispatchAvailableWifisAction] = useReducer(availableWifisReducer, []);
 
-  // TODO(dave): remove
-  useEffect(() => {
-    dispatchAvailableWifisAction([{
-      ssid: 'onion',
-      public: false,
-    }, {
-      ssid: 'olive',
-      public: true,
-    }, {
-      ssid: '🍭',
-      public: false,
-    }]);
-  }, []);
-
   async function connect() {
     setConnecting(true);
 
-    const device = await navigator.bluetooth.requestDevice({
-      filters: [{
-        services: [SERVICE_ID],
-      }],
-    });
+    let device;
+    try {
+      device = await navigator.bluetooth.requestDevice({
+        filters: [{
+          services: [SERVICE_ID],
+        }],
+      });
+    } catch (e) {
+      console.log('failed');
+    }
 
     const server = await device.gatt.connect();
-
-    console.log(server);
 
     device.ongattserverdisconnected = disconnected;
 
@@ -102,8 +86,6 @@ export function useBluetooth() {
   function disconnected(event) {
     const device = event.target;
 
-    console.log('disconnected', device);
-
     setServer(null);
   }
 
@@ -112,10 +94,13 @@ export function useBluetooth() {
   }
 
   async function scanWifi() {
-    const service = await server.getPrimaryService(SERVICE_ID);
-    const wifiScanSignalCharacteristic = await service.getCharacteristic(WIFI_SCAN_SIGNAL);
-
-    await wifiScanSignalCharacteristic.writeValue(Uint8Array.of(1));
+    try {
+      const service = await server.getPrimaryService(SERVICE_ID);
+      const scanWifiCharacteristic = await service.getCharacteristic(SCAN_WIFI);
+      await scanWifiCharacteristic.writeValue(Uint8Array.of(1));
+    } catch (e) {
+      console.log(`unable to scan wifis: ${e}`);
+    }
   }
 
   async function connectWifi(ssid, psk) {
@@ -123,30 +108,18 @@ export function useBluetooth() {
       const service = await server.getPrimaryService(SERVICE_ID);
 
       const [
-        wifiSsidStringCharacteristic,
-        wifiPskStringCharacteristic,
-        wifiConnectSignalCharacteristic,
+        connectWifiCharacteristic,
       ] = await Promise.all([
-        await service.getCharacteristic(WIFI_SSID_STRING),
-        await service.getCharacteristic(WIFI_PSK_STRING),
-        await service.getCharacteristic(WIFI_CONNECT_SIGNAL),
+        await service.getCharacteristic(CONNECT_WIFI),
       ]);
 
-      // const wifiSsidStringCharacteristic = await service.getCharacteristic(WIFI_SSID_STRING);
-      // const wifiPskStringCharacteristic = await service.getCharacteristic(WIFI_PSK_STRING);
-      // const wifiConnectSignalCharacteristic = await service.getCharacteristic(WIFI_CONNECT_SIGNAL);
-
-      await wifiSsidStringCharacteristic.writeValue(new TextEncoder('utf-8').encode(ssid));
-      await wifiPskStringCharacteristic.writeValue(new TextEncoder('utf-8').encode(psk));
-      await wifiConnectSignalCharacteristic.writeValue(Uint8Array.of(1));
+      await connectWifiCharacteristic.writeValue(new TextEncoder('utf-8').encode(ssid));
     } catch (e) {
       console.log(`unable to connect wifi: ${e}`);
     }
   }
 
   useEffect(() => {
-    console.log('updating...');
-
     const subscriptions = [];
 
     async function update() {
@@ -159,87 +132,32 @@ export function useBluetooth() {
         const service = await server.getPrimaryService(SERVICE_ID);
 
         const [
-          deviceNameCharacteristic,
-          manufacturerNameCharacteristic,
-          // serialNumberCharacteristic,
-          modelNumberCharacteristic,
-          networkAvailabilityStatusCharacteristic,
-          ipAddressCharacteristic,
-          discoveredWifiSsidCharacteristic,
-          wifiSsidStringCharacteristic,
-          // onionApiCharacteristic,
+          statusCharacteristic,
+          discoveredWifiCharacteristic,
+          onionApiCharacteristic,
         ] = await Promise.all([
-          await service.getCharacteristic(DEVICE_NAME),
-          await service.getCharacteristic(MANUFACTURER_NAME),
-          // await service.getCharacteristic(SERIAL_NUMBER),
-          await service.getCharacteristic(MODEL_NUMBER),
-          await service.getCharacteristic(NETWORK_AVAILABILITY_STATUS),
-          await service.getCharacteristic(IP_ADDRESS),
-          await service.getCharacteristic(DISCOVERED_WIFI_SSID),
-          await service.getCharacteristic(WIFI_SSID_STRING),
-          // await service.getCharacteristic(ONION_API),
+          await service.getCharacteristic(STATUS),
+          await service.getCharacteristic(DISCOVERED_WIFI),
+          await service.getCharacteristic(ONION_API),
         ]);
-
-        // const deviceNameCharacteristic = await service.getCharacteristic(DEVICE_NAME);
-        // const manufacturerNameCharacteristic = await service.getCharacteristic(MANUFACTURER_NAME);
-        // // const serialNumberCharacteristic = await service.getCharacteristic(SERIAL_NUMBER);
-        // const modelNumberCharacteristic = await service.getCharacteristic(MODEL_NUMBER);
-        // const networkAvailabilityStatusCharacteristic = await service.getCharacteristic(NETWORK_AVAILABILITY_STATUS);
-        // const ipAddressCharacteristic = await service.getCharacteristic(IP_ADDRESS);
-        // const wifiScanListCharacteristic = await service.getCharacteristic(WIFI_SCAN_LIST);
-        // const wifiSsidStringCharacteristic = await service.getCharacteristic(WIFI_SSID_STRING);
 
         const [
-          deviceName,
-          manufacturerName,
-          // serialNumber,
-          modelNumber,
-          networkAvailabilityStatus,
-          ipAddress,
-          ssidString,
-          // onionApi,
+          status,
+          onionApi,
         ] = await Promise.all([
-          characteristicText(deviceNameCharacteristic),
-          characteristicText(manufacturerNameCharacteristic),
-          // characteristicText(serialNumberCharacteristic),
-          characteristicText(modelNumberCharacteristic),
-          characteristicByte(networkAvailabilityStatusCharacteristic),
-          characteristicText(ipAddressCharacteristic),
-          characteristicText(wifiSsidStringCharacteristic),
-          // characteristicText(onionApiCharacteristic),
+          characteristicText(statusCharacteristic),
+          characteristicText(onionApiCharacteristic),
         ]);
 
-        await networkAvailabilityStatusCharacteristic.startNotifications();
-        networkAvailabilityStatusCharacteristic.oncharacteristicvaluechanged = async (event) => {
-          setDispenser({
-            networkAvailabilityStatus: byte(event.target.value),
-          });
+        await discoveredWifiCharacteristic.startNotifications();
+        discoveredWifiCharacteristic.oncharacteristicvaluechanged = async (event) => {
+          dispatchAvailableWifisAction(json(event.target.value));
         };
-        subscriptions.push(networkAvailabilityStatusCharacteristic);
-
-        await wifiSsidStringCharacteristic.startNotifications();
-        wifiSsidStringCharacteristic.oncharacteristicvaluechanged = async (event) => {
-          setDispenser({
-            ssidString: text(event.target.value),
-          });
-        };
-        subscriptions.push(wifiSsidStringCharacteristic);
-
-        // await discoveredWifiSsidCharacteristic.startNotifications();
-        // discoveredWifiSsidCharacteristic.oncharacteristicvaluechanged = async (event) => {
-        //   dispatchAvailableWifisAction(text(event.target.value));
-        // };
-        // subscriptions.push(discoveredWifiSsidCharacteristic);
+        subscriptions.push(discoveredWifiCharacteristic);
 
         setDispenser({
-          deviceName,
-          manufacturerName,
-          // serialNumber,
-          modelNumber,
-          networkAvailabilityStatus,
-          ipAddress,
-          ssidString,
-          // onionApi,
+          status,
+          onionApi,
         });
       } catch (e) {
         console.error(`unable to read: ${e}`);
@@ -248,7 +166,6 @@ export function useBluetooth() {
     update();
 
     return function cleanup() {
-      console.log('cleanup...');
       Promise.all(subscriptions.map(subscription => async () => {
         subscription.oncharacteristicvaluechanged = null;
         await subscription.stopNotifications();
