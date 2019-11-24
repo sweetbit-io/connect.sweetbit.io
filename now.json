@@ -14,15 +14,7 @@
     }
   ],
   "routes": [
-    {
-      "src": "/(.*)",
-      "headers": { "cache-control": "s-maxage=0" },
-      "dest": "/$1"
-    },
-    {
-      "src": "/.*",
-      "headers": { "cache-control": "s-maxage=0" },
-      "dest": "/index.html"
-    }
+    { "handle": "filesystem" },
+    { "src": "/.*", "dest": "/index.html" }
   ]
 }
